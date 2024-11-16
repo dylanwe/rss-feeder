@@ -3,9 +3,9 @@ RSS Pocket Feeder is a program that sends the latest articles from your RSS feed
 
 ## TODO:
 - [x] Fetch RSS feeds
-- [ ] Get Pocket access token
-- [ ] Remove archived articles from the RSS feeds
-- [ ] Send articles to Pocket account
+- [x] Get Pocket access token
+- [ ] Limit to 10 articles
+- [ ] Send articles to Pocket account (add title as tag)
 - [ ] Store RSS feeds
 - [ ] Add user interface
 

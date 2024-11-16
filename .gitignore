@@ -12,3 +12,5 @@ wheels/
 # Other
 .DS_Store
 .env
+*.db
+
