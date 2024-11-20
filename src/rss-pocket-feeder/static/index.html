@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="./static/styles.css">
+    <title>RSS feeder</title>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                RSS feeder
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 24 24" width="28" fill="currentColor"><path d="M1.996 15.97a1.996 1.996 0 1 1 0-3.992 1.996 1.996 0 0 1 0 3.992zM1.12 7.977a.998.998 0 0 1-.247-1.98 8.103 8.103 0 0 1 9.108 8.04v.935a.998.998 0 1 1-1.996 0v-.934a6.108 6.108 0 0 0-6.865-6.06zM0 1.065A.998.998 0 0 1 .93.002C8.717-.517 15.448 5.374 15.967 13.16c.042.626.042 1.254 0 1.88a.998.998 0 1 1-1.992-.133c.036-.538.036-1.077 0-1.614C13.53 6.607 7.75 1.548 1.065 1.994A.998.998 0 0 1 0 1.064z"></path></svg>
+            </h1>
+            <form>
+                <input type="text" name="url" placeholder="Enter feed URL">
+                <button type="button" onclick=addFeed() >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="-4.5 -4.5 24 24" width="20" fill="currentColor"><path d="M8.9 6.9v-5a1 1 0 1 0-2 0v5h-5a1 1 0 1 0 0 2h5v5a1 1 0 1 0 2 0v-5h5a1 1 0 1 0 0-2h-5z"></path></svg>
+                </button>
+            </form>
+        </header>
+        <main>
+            <ul id="feeds"></ul>
+        </main>
+
+        <footer>
+            <p>
+                Feeds will be fetched every 3 hours.
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        async function getFeeds() {
+            const response = await fetch('./rss/feeds');
+            const feeds = await response.json();
+            const feedsList = document.querySelector('#feeds');
+            feedsList.innerHTML = '';
+            feeds.forEach(feed => {
+                const li = document.createElement('li');
+                li.classList.add('loading');
+                li.setAttribute('data-url', feed.url);
+                li.innerHTML = `
+                    <a href="${feed.url}" target="_blank"><span>${feed.title}</span></a>
+                    <button onclick="deleteFeed(\'${feed.url}\')">
+                        <svg class="loadIcon" xmlns="http://www.w3.org/2000/svg" viewBox="-1.5 -2.5 24 24" width="20" fill="currentColor"><path d="M17.83 4.194l.42-1.377a1 1 0 1 1 1.913.585l-1.17 3.825a1 1 0 0 1-1.248.664l-3.825-1.17a1 1 0 1 1 .585-1.912l1.672.511A7.381 7.381 0 0 0 3.185 6.584l-.26.633a1 1 0 1 1-1.85-.758l.26-.633A9.381 9.381 0 0 1 17.83 4.194zM2.308 14.807l-.327 1.311a1 1 0 1 1-1.94-.484l.967-3.88a1 1 0 0 1 1.265-.716l3.828.954a1 1 0 0 1-.484 1.941l-1.786-.445a7.384 7.384 0 0 0 13.216-1.792 1 1 0 1 1 1.906.608 9.381 9.381 0 0 1-5.38 5.831 9.386 9.386 0 0 1-11.265-3.328z"></path></svg>
+                        <svg class="deleteIcon" xmlns="http://www.w3.org/2000/svg" viewBox="-6 -6 24 24" width="20" fill="currentColor"><path d="M7.314 5.9l3.535-3.536A1 1 0 1 0 9.435.95L5.899 4.485 2.364.95A1 1 0 1 0 .95 2.364l3.535 3.535L.95 9.435a1 1 0 1 0 1.414 1.414l3.535-3.535 3.536 3.535a1 1 0 1 0 1.414-1.414L7.314 5.899z"></path></svg>
+                    </button>
+                `;
+                feedsList.appendChild(li);
+            });
+        }
+
+        async function deleteFeed(url) {
+            const li = document.querySelector(`li[data-url="${url}"]`);
+            li.classList.add('loading');
+            
+            // disable button
+            li.querySelector('button').disabled = true;
+
+            const response = await fetch('./rss/feeds', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ rss_link: url })
+            });
+
+            if (response.status !== 200) {
+                const text = await response.text();
+                alert(text);
+                return;
+            }
+
+            getFeeds();
+        }
+
+        function isValidHttpUrl(string) {
+            try {
+                const newUrl = new URL(string);
+                return newUrl.protocol === 'http:' || newUrl.protocol === 'https:';
+            } catch (err) {
+                return false;
+            }
+        }
+
+        async function addFeed() {
+            const url = document.querySelector('input[name="url"]').value;
+
+            if (!isValidHttpUrl(url)) {
+                alert('Invalid URL');
+                return;
+            }
+
+            const response = await fetch('./rss/feeds', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ rss_link: url })
+            });
+
+            if (response.status !== 200) {
+                alert('Invalid RSS feed');
+                return;
+            }
+
+            document.querySelector('input[name="url"]').value = '';
+            getFeeds();
+        }
+
+        getFeeds();
+    </script>
+</body>
+</html>
