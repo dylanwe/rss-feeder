@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Tuple
+from models import PocketItem
+import asyncio
 import requests
 import settings
 import json
@@ -55,55 +57,77 @@ def callback(request_token: str):
     return {"access_token": access_token, "username": username}
 
 
-async def get_rss_feed(tag: str) -> Tuple[str, set[str]]:
-    try:
-        url = f"{POCKET_BASE_URL}/v3/get"
-        headers = {
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "consumer_key": settings.POCKET_CONSUMER_KEY,
-            "access_token": settings.POCKET_ACCESS_TOKEN,
-            "tag": tag,
-            "count": settings.ARTICLE_LIMIT,
-            "detailType": "simple"
-        }
+async def get_rss_feed(tag: str) -> Tuple[str, list[PocketItem]]:
+    url = f"{POCKET_BASE_URL}/v3/get"
+    headers = {
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "consumer_key": settings.POCKET_CONSUMER_KEY,
+        "access_token": settings.POCKET_ACCESS_TOKEN,
+        "tag": tag,
+        "count": settings.ARTICLE_LIMIT,
+        "detailType": "simple"
+    }
 
-        response = requests.post(url, json=payload, headers=headers)
-        json = response.json()
-        articles = set()
+    response = requests.post(url, json=payload, headers=headers)
 
-        for entry in json["list"].values():
-            articles.add(entry["given_url"])
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail=f"Could not get articles from Pocket for tag {tag}")
 
-        return (tag, articles)
-    except Exception as e:
-        print(f"Failed to get RSS feed for tag {tag}")
-        print(e)
-        return (tag, set())
+    json = response.json()
+    articles = list()
+
+    for entry in json["list"].values():
+        given_url = entry["given_url"]
+        item_id = entry["item_id"]
+        articles.append(PocketItem(link=given_url, item_id=item_id))
+
+    return (tag, articles)
 
 
-
-async def get_rss_feeds_from_tag(tags: set[str]) -> dict[str, Tuple[str, set[str]]]:
+async def get_rss_feeds_from_tag(tags: set[str]) -> dict[str, list[PocketItem]]:
     feeds = {}
-    for tag in tags:
-        (title, article_urls) = await get_rss_feed(tag)
+    tasks = [get_rss_feed(tag) for tag in tags]
+    results = await asyncio.gather(*tasks)
+    for (title, article_urls) in results:
         feeds[title] = article_urls
 
     return feeds
 
-async def save_articles(links: set[str], tag: str):
+async def save_articles(links: dict[str, set[str]]):
+    url = f"{POCKET_BASE_URL}/v3/send?access_token={settings.POCKET_ACCESS_TOKEN}&consumer_key={settings.POCKET_CONSUMER_KEY}"
+    for key in links.keys():
+        actions = []
+        for link in links[key]:
+            actions.append({
+                "action": "add",
+                "url": link,
+                "tags": key
+            })
+        json_string = json.dumps(actions)
+        encoded = urllib.parse.quote(json_string)
+
+        response = requests.get(url + f"&actions={encoded}")
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail=response.text)
+
+async def delete_articles(item_ids: dict[str, set[int]]):
     url = f"{POCKET_BASE_URL}/v3/send?access_token={settings.POCKET_ACCESS_TOKEN}&consumer_key={settings.POCKET_CONSUMER_KEY}"
     actions = []
-    for link in links:
-        actions.append({
-            "action": "add",
-            "url": link,
-            "tags": tag
-        })
+    for key in item_ids.keys():
+        for item_id in item_ids[key]:
+            actions.append({
+                "action": "delete",
+                "item_id": item_id
+            })
 
     json_string = json.dumps(actions)
     encoded = urllib.parse.quote(json_string)
 
-    requests.get(url + f"&actions={encoded}")
+    response = requests.get(url + f"&actions={encoded}")
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail=response.text)
 
