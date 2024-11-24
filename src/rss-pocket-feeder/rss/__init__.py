@@ -5,8 +5,9 @@ from models import GenericResponse, RSSItem, FeedPostRequest
 from db.feeds import get_feeds, save_feed, delete_feed, Feed
 import feedparser
 import settings
+import logging
 
-
+logger = logging.getLogger('uvicorn.error')
 rss_router = APIRouter(prefix="/rss", tags=["RSS"])
 
 async def get_rss_feed(rss_link: str) -> Tuple[str, list[RSSItem]]:
@@ -21,6 +22,7 @@ async def get_rss_feed(rss_link: str) -> Tuple[str, list[RSSItem]]:
 
 @rss_router.get("/feeds")
 async def get_rss_feeds() -> list[Feed]:
+    logger.info("Getting feeds")
     return await get_feeds()
 
 
@@ -50,6 +52,8 @@ async def refresh_feeds():
     await save_articles(to_save)
     await delete_articles(to_delete)
 
+    logger.info(f"Refresh, saved: {len(to_save)}, deleted: {len(to_delete)}")
+
     return {
         "saved": to_save,
         "deleted": to_delete
@@ -59,6 +63,7 @@ async def refresh_feeds():
 
 @rss_router.post("/feeds")
 async def save_rss_feed(request: FeedPostRequest) -> GenericResponse:
+    logger.info(f"Saving feed: {request.rss_link}")
     try:
         (title, _) = await get_rss_feed(request.rss_link)
         await save_feed(title, request.rss_link)
@@ -70,6 +75,7 @@ async def save_rss_feed(request: FeedPostRequest) -> GenericResponse:
 
 @rss_router.delete("/feeds")
 async def delete_rss_feed(request: FeedPostRequest) -> GenericResponse:
+    logger.info(f"Deleting feed: {request.rss_link}")
     try:
         print(request.rss_link)
         (tag, articles) = await get_rss_feed(request.rss_link)
