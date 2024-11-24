@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from typing import Tuple
 from pocket import get_rss_feeds_from_tag, save_articles, delete_articles
-from models import RSSItem, FeedPostRequest
-import sqlite3
+from models import GenericResponse, RSSItem, FeedPostRequest
+from db.feeds import get_feeds, save_feed, delete_feed, Feed
 import feedparser
 import settings
 
@@ -18,27 +18,19 @@ async def get_rss_feed(rss_link: str) -> Tuple[str, list[RSSItem]]:
 
     return (settings.sanitize_tag(parsed_feed.feed.title.lower()), urls)
 
+
 @rss_router.get("/feeds")
-async def get_rss_feeds():
-    conn = sqlite3.connect("feeds.db")
-    rss_links = conn.execute("SELECT title, url FROM feeds").fetchall()
-    conn.close()
+async def get_rss_feeds() -> list[Feed]:
+    return await get_feeds()
 
-    feeds = []
-    for row in rss_links:
-        feeds.append({"title": row[0], "url": row[1]})
-
-    return feeds
 
 @rss_router.patch("/feeds")
 async def refresh_feeds():
-    conn = sqlite3.connect("feeds.db")
-    rss_links = conn.execute("SELECT url FROM feeds").fetchall()
-    conn.close()
+    rss_links = await get_feeds()
 
     feeds = {}
-    for row in rss_links:
-        link = row[0]
+    for rss_link in rss_links:
+        link = rss_link.url
         (tag, article_urls) = await get_rss_feed(link)
         feeds[tag] = article_urls
 
@@ -66,20 +58,18 @@ async def refresh_feeds():
 
 
 @rss_router.post("/feeds")
-async def save_rss_feed(request: FeedPostRequest):
+async def save_rss_feed(request: FeedPostRequest) -> GenericResponse:
     try:
-        conn = sqlite3.connect("feeds.db")
         (title, _) = await get_rss_feed(request.rss_link)
-        conn.execute("INSERT INTO feeds (title, url) VALUES (?, ?)", (title, request.rss_link))
-        conn.commit()
-        conn.close()
-        return {"status": "success"}
+        await save_feed(title, request.rss_link)
+        return GenericResponse(status="success")
     except Exception as e:
         print(e)
-        return {"status": "failed"}
+        return GenericResponse(status="failed")
+
 
 @rss_router.delete("/feeds")
-async def delete_rss_feed(request: FeedPostRequest):
+async def delete_rss_feed(request: FeedPostRequest) -> GenericResponse:
     try:
         print(request.rss_link)
         (tag, articles) = await get_rss_feed(request.rss_link)
@@ -88,13 +78,10 @@ async def delete_rss_feed(request: FeedPostRequest):
             item_ids = set([article.item_id for article in saved_articles[tag] if article.link in [article.link for article in articles]])
             await delete_articles({tag: item_ids})
 
-        conn = sqlite3.connect("feeds.db")
-        conn.execute("DELETE FROM feeds WHERE url = ?", (request.rss_link,))
-        conn.commit()
-        conn.close()
-        return {"status": "success"}
+        await delete_feed(request.rss_link)
+        return GenericResponse(status="success")
     except Exception as e:
         print(e)
-        return {"status": "failed"}
+        return GenericResponse(status="failed")
 
 

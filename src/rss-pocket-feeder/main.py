@@ -11,7 +11,6 @@ app.include_router(rss_router)
 async def read_root():
     return FileResponse("src/rss-pocket-feeder/static/index.html")
 
-# mount the static files
 @app.get("/static/{file_path}")
 async def read_static(file_path: str):
     return FileResponse(f"src/rss-pocket-feeder/static/{file_path}")

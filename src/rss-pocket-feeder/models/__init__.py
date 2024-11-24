@@ -12,3 +12,7 @@ class PocketItem:
 @dataclass
 class FeedPostRequest:
     rss_link: str
+
+@dataclass
+class GenericResponse:
+    status: str

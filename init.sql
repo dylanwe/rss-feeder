@@ -1,15 +1,15 @@
 CREATE TABLE feeds (
     url TEXT PRIMARY KEY,
     title TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
 );
 
-CREATE TRIGGER update_updated_at
-AFTER UPDATE ON feeds
-FOR EACH ROW
+CREATE OR REPLACE FUNCTION update_updated_at_function()
+RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE feeds
-    SET updated_at = CURRENT_TIMESTAMP
-    WHERE rowid = NEW.rowid;
+    -- Set the updated_at column to the current timestamp
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
 END;
+$$ LANGUAGE plpgsql;
