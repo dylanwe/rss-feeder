@@ -6,9 +6,11 @@ import requests
 import settings
 import json
 import urllib.parse
+import logging
 
 
 pocket_router = APIRouter(prefix="/pocket", tags=["Pocket"])
+logger = logging.getLogger('uvicorn.error')
 POCKET_BASE_URL = "https://getpocket.com"
 
 @pocket_router.get("/start-auth")
@@ -38,7 +40,7 @@ def callback(request_token: str):
     """
     Callback endpoint to handle Pocket's redirect after user authorization
     """
-    print(request_token)
+    logger.info(f"Callback with request token: {request_token}")
     access_token_url = f"{POCKET_BASE_URL}/v3/oauth/authorize"
     headers = {"X-Accept": "application/json"}
     payload = {
@@ -47,7 +49,7 @@ def callback(request_token: str):
     }
 
     response = requests.post(access_token_url, json=payload, headers=headers)
-    print(response.text)
+    logger.info(response.text)
     if response.status_code != 200:
         raise HTTPException(status_code=500, detail="Failed to get access token.")
     data = response.json()

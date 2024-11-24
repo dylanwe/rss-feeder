@@ -60,7 +60,6 @@ async def refresh_feeds():
     }
 
 
-
 @rss_router.post("/feeds")
 async def save_rss_feed(request: FeedPostRequest) -> GenericResponse:
     logger.info(f"Saving feed: {request.rss_link}")
@@ -69,7 +68,7 @@ async def save_rss_feed(request: FeedPostRequest) -> GenericResponse:
         await save_feed(title, request.rss_link)
         return GenericResponse(status="success")
     except Exception as e:
-        print(e)
+        logger.error(e)
         return GenericResponse(status="failed")
 
 
@@ -77,17 +76,16 @@ async def save_rss_feed(request: FeedPostRequest) -> GenericResponse:
 async def delete_rss_feed(request: FeedPostRequest) -> GenericResponse:
     logger.info(f"Deleting feed: {request.rss_link}")
     try:
-        print(request.rss_link)
         (tag, articles) = await get_rss_feed(request.rss_link)
         saved_articles = await get_rss_feeds_from_tag({tag})
-        if saved_articles[tag] is not None and len(saved_articles[tag]) is not 0:
+        if saved_articles[tag] != None and len(saved_articles[tag]) != 0:
             item_ids = set([article.item_id for article in saved_articles[tag] if article.link in [article.link for article in articles]])
             await delete_articles({tag: item_ids})
 
         await delete_feed(request.rss_link)
         return GenericResponse(status="success")
     except Exception as e:
-        print(e)
+        logger.error(e)
         return GenericResponse(status="failed")
 
 

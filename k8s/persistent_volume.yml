@@ -1,0 +1,16 @@
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rss-feeder-pv
+  labels:
+    type: local
+    app: rss-feeder
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /data/postgresql

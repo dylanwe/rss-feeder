@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rss-feeder-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rss-feeder
+  template:
+    metadata:
+      labels:
+        app: rss-feeder
+    spec:
+      containers:
+        - name: rss-feeder-app
+          image: 'dylanwe/rss-feeder:latest'
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: rss-feeder-app
+          envFrom:
+            - configMapRef:
+                name: rss-feeder-secret
