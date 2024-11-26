@@ -100,6 +100,9 @@ async def get_rss_feeds_from_tag(tags: set[str]) -> dict[str, list[PocketItem]]:
 async def save_articles(links: dict[str, set[str]]):
     url = f"{POCKET_BASE_URL}/v3/send?access_token={settings.POCKET_ACCESS_TOKEN}&consumer_key={settings.POCKET_CONSUMER_KEY}"
     for key in links.keys():
+        if len(links[key]) == 0:
+            continue
+
         actions = []
         for link in links[key]:
             actions.append({
@@ -107,7 +110,9 @@ async def save_articles(links: dict[str, set[str]]):
                 "url": link,
                 "tags": key
             })
+
         json_string = json.dumps(actions)
+        logger.info(f"Saving articles: {json_string}")
         encoded = urllib.parse.quote(json_string)
 
         response = requests.get(url + f"&actions={encoded}")
@@ -117,19 +122,24 @@ async def save_articles(links: dict[str, set[str]]):
 
 async def delete_articles(item_ids: dict[str, set[int]]):
     url = f"{POCKET_BASE_URL}/v3/send?access_token={settings.POCKET_ACCESS_TOKEN}&consumer_key={settings.POCKET_CONSUMER_KEY}"
-    actions = []
     for key in item_ids.keys():
+        actions = []
+        if len(item_ids[key]) == 0:
+            continue
+
         for item_id in item_ids[key]:
             actions.append({
                 "action": "delete",
                 "item_id": item_id
             })
+    
 
-    json_string = json.dumps(actions)
-    encoded = urllib.parse.quote(json_string)
+        json_string = json.dumps(actions)
+        logger.info(f"Deleting articles: {json_string}")
+        encoded = urllib.parse.quote(json_string)
 
-    response = requests.get(url + f"&actions={encoded}")
+        response = requests.get(url + f"&actions={encoded}")
 
-    if response.status_code != 200:
-        raise HTTPException(status_code=500, detail=response.text)
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail=response.text)
 

@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rss-feeder-postgres
+  name: postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rss-feeder
+      app: postgres
   template:
     metadata:
       labels:
-        app: rss-feeder
+        app: postgres
     spec:
       containers:
         - name: postgres

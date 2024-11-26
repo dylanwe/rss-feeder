@@ -6,9 +6,9 @@ metadata:
     app: rss-feeder
 spec:
   type: NodePort
-  ports:
-    - name: postgres
-      port: 5432
-      targetPort: postgres
   selector:
-    app: rss-feeder-postgres
+    app: rss-feeder
+  ports:
+    - name: rss-feeder
+      port: 8000
+      targetPort: rss-feeder

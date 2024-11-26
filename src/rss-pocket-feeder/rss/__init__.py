@@ -29,6 +29,7 @@ async def get_rss_feeds() -> list[Feed]:
 @rss_router.patch("/feeds")
 async def refresh_feeds():
     rss_links = await get_feeds()
+    logger.info(f"Refreshing feeds: {len(rss_links)}")
 
     feeds = {}
     for rss_link in rss_links:
@@ -49,8 +50,17 @@ async def refresh_feeds():
         to_save[key] = to_save_urls
         to_delete[key] = to_delete_item_ids
 
-    await save_articles(to_save)
-    await delete_articles(to_delete)
+    # filter out empty sets
+    to_save = {k: v for k, v in to_save.items() if len(v) != 0}
+    to_delete = {k: v for k, v in to_delete.items() if len(v) != 0}
+
+    logger.info(f"Got to save: {to_save}")
+    logger.info(f"Got to delete: {to_delete}")
+
+    if len(to_save):
+        await save_articles(to_save)
+    if len(to_delete):
+        await delete_articles(to_delete)
 
     logger.info(f"Refresh, saved: {len(to_save)}, deleted: {len(to_delete)}")
 

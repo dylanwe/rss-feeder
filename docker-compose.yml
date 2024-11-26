@@ -1,6 +1,17 @@
 version: '3.9'
 
 services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: rss_feed
+      POSTGRES_USER: feeder
+      POSTGRES_PASSWORD: feeder
   db:
     image: postgres:16
     ports:
