@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rss-feeder-secrets
+  namespace: rss-feeder
+  labels:
+    app: rss-feeder
+data:
+  POSTGRES_DB: rss_feeder
+  POSTGRES_USER: feeder
+  POSTGRES_PASSWORD: '***'
+  POSTGRES_HOST: postgres
+  POCKET_CONSUMER_KEY: '***'
+  POCKET_ACCESS_TOKEN: '***'
+  REDIRECT_URI: http://localhost:8000/pocket/callback
+

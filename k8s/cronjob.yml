@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rss-feeder
+  namespace: rss-feeder
+spec:
+  schedule: "0 */6 * * *"  # Runs every 6 hours
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: job
+              image: curlimages/curl:8.11.0
+              command:
+                - curl
+                - -X
+                - PATCH
+                - "http://rss-feeder:8000/rss/feeds"
+          restartPolicy: OnFailure
+

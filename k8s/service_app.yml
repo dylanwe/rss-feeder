@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: rss-feeder
+  namespace: rss-feeder
   labels:
     app: rss-feeder
 spec:
@@ -11,4 +12,5 @@ spec:
   ports:
     - name: rss-feeder
       port: 8000
-      targetPort: rss-feeder
+      targetPort: 8000
+

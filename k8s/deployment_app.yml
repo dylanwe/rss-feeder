@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rss-feeder
+  namespace: rss-feeder
 spec:
   replicas: 1
   selector:
@@ -15,10 +16,10 @@ spec:
       containers:
         - name: rss-feeder
           image: 'dylanwe/rss-feeder:latest'
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
-              name: rss-feeder
           envFrom:
             - configMapRef:
-                name: rss-feeder-secret
+                name: rss-feeder-secrets
+

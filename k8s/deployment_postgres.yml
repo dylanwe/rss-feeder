@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
+  namespace: rss-feeder
 spec:
   replicas: 1
   selector:
@@ -15,17 +16,22 @@ spec:
       containers:
         - name: postgres
           image: 'postgres:16'
+          args:
+            - "-c"
+            - "password_encryption=scram-sha-256"
+            - "-c"
+            - "listen_addresses=*"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
-              name: postgres
           envFrom:
             - configMapRef:
-                name: rss-feeder-secret
+                name: rss-feeder-secrets
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgresdata
       volumes:
         - name: postgresdata
           persistentVolumeClaim:
-            claimName: rss-feeder-claim
+            claimName: postgres-volume-claim
+
