@@ -35,7 +35,7 @@ class FeedService:
 
     async def refresh_feeds(self, access_token: str) -> RefreshedStatus:
         rss_links = await self.feed_repository.get_feeds(access_token=access_token)
-        logger.info(f"Refreshing feeds: {len(rss_links)}")
+        logger.info(f"Refreshing {len(rss_links)} feeds")
 
         feeds = {}
         for rss_link in rss_links:
@@ -57,15 +57,15 @@ class FeedService:
             to_delete[key] = to_delete_item_ids
 
         # filter out empty sets
-        to_save = {k: v for k, v in to_save.items() if len(v) != 0}
-        to_delete = {k: v for k, v in to_delete.items() if len(v) != 0}
+        to_save = {tag: urls for tag, urls in to_save.items() if urls}
+        to_delete = {tag: ids for tag, ids in to_delete.items() if ids}
 
-        logger.info(f"Got to save: {to_save}")
-        logger.info(f"Got to delete: {to_delete}")
+        logger.info(f"To save: {to_save}")
+        logger.info(f"To delete: {to_delete}")
 
-        if len(to_save):
+        if to_save:
             await self.pocket_repository.save_articles(to_save, access_token)
-        if len(to_delete):
+        if to_delete:
             await self.pocket_repository.delete_articles(to_delete, access_token)
 
         return RefreshedStatus(saved=to_save, deleted=to_delete)

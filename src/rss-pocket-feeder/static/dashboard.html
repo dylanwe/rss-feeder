@@ -56,12 +56,6 @@
 
         (async () => {
             const username = getCookie("username");
-            const pocketToken = getCookie("access_token");
-
-            // If the user is not logged in, redirect to the login page
-            if (!username || !pocketToken) {
-                window.location.href = '/';
-            }
 
             document.getElementById('username').innerText = username;
         })();

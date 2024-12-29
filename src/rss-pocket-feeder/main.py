@@ -1,8 +1,9 @@
 from fastapi import APIRouter, FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from routers.user import router as user_router
 from routers.feeds import router as feeds_router
 from routers.pocket import router as pocket_router_v2
+from utils import PocketAccessTokenDep
 
 app = FastAPI()
 
@@ -13,11 +14,17 @@ api.include_router(pocket_router_v2)
 app.include_router(api)
 
 @app.get("/")
-async def login():
+async def login(access_token: PocketAccessTokenDep = None):
+    if access_token is not None:
+        return RedirectResponse("/dashboard")
+
     return FileResponse("src/rss-pocket-feeder/static/login.html")
 
 @app.get("/dashboard")
-async def dashboard():
+async def dashboard(access_token: PocketAccessTokenDep = None):
+    if access_token is None:
+        return RedirectResponse("/")
+
     return FileResponse("src/rss-pocket-feeder/static/dashboard.html")
 
 @app.get("/static/{file_path}")
