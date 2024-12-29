@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 from services.user import UserService
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_200_OK
 import requests
 import settings
 import logging
@@ -24,8 +25,8 @@ async def start_auth() -> RedirectResponse:
     }
 
     response = requests.post(request_token_url, json=payload, headers=headers)
-    if response.status_code != 200:
-        raise HTTPException(status_code=500, detail="Failed to get request token.")
+    if response.status_code != HTTP_200_OK:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get request token.")
     data = response.json()
     request_token = data["code"]
     auth_url = f"{POCKET_BASE_URL}/auth/authorize?request_token={request_token}&redirect_uri={settings.REDIRECT_URI}?request_token={request_token}"
@@ -47,8 +48,8 @@ async def callback(request_token: str) -> RedirectResponse:
 
     response = requests.post(access_token_url, json=payload, headers=headers)
     logger.info(response.text)
-    if response.status_code != 200:
-        raise HTTPException(status_code=500, detail="Failed to get access token.")
+    if response.status_code != HTTP_200_OK:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get access token.")
     data = response.json()
     access_token = data["access_token"]
     username = data["username"]
