@@ -4,8 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 POCKET_CONSUMER_KEY = os.getenv("POCKET_CONSUMER_KEY")
-POCKET_ACCESS_TOKEN = os.getenv("POCKET_ACCESS_TOKEN")
-REDIRECT_URI = os.getenv("REDIRECT_URI")
+REDIRECT_URI = "http://localhost:8000/api/v2/pocket/callback"
 ARTICLE_LIMIT = 10
 
 POSTGRES_USER = os.getenv("POSTGRES_USER")

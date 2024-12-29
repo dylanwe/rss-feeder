@@ -1,15 +1,14 @@
+CREATE TABLE users (
+    pocket_access_token TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL
+);
+
 CREATE TABLE feeds (
     url TEXT PRIMARY KEY,
     title TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP
+    updated_at TIMESTAMP,
+    user_token TEXT,
+    FOREIGN KEY (user_token) REFERENCES users(pocket_access_token)
 );
 
-CREATE OR REPLACE FUNCTION update_updated_at_function()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Set the updated_at column to the current timestamp
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;

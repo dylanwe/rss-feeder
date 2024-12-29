@@ -5,18 +5,4 @@ services:
     build: .
     ports:
       - "8000:8000"
-    depends_on:
-      - db
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_DB: rss_feed
-      POSTGRES_USER: feeder
-      POSTGRES_PASSWORD: feeder
-  db:
-    image: postgres:16
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: rss_feed
-      POSTGRES_USER: feeder
-      POSTGRES_PASSWORD: feeder
+

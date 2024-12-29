@@ -1,15 +1,24 @@
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.responses import FileResponse
-from pocket import pocket_router
-from rss import rss_router
+from routers.user import router as user_router
+from routers.feeds import router as feeds_router
+from routers.pocket import router as pocket_router_v2
 
 app = FastAPI()
-app.include_router(pocket_router)
-app.include_router(rss_router)
+
+api = APIRouter(prefix="/api/v2")
+api.include_router(user_router)
+api.include_router(feeds_router)
+api.include_router(pocket_router_v2)
+app.include_router(api)
 
 @app.get("/")
-async def read_root():
-    return FileResponse("src/rss-pocket-feeder/static/index.html")
+async def login():
+    return FileResponse("src/rss-pocket-feeder/static/login.html")
+
+@app.get("/dashboard")
+async def dashboard():
+    return FileResponse("src/rss-pocket-feeder/static/dashboard.html")
 
 @app.get("/static/{file_path}")
 async def read_static(file_path: str):

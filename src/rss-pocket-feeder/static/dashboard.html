@@ -6,15 +6,19 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="./static/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
     <title>RSS feeder</title>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>
+                📖
                 RSS feeder
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 24 24" width="28" fill="currentColor"><path d="M1.996 15.97a1.996 1.996 0 1 1 0-3.992 1.996 1.996 0 0 1 0 3.992zM1.12 7.977a.998.998 0 0 1-.247-1.98 8.103 8.103 0 0 1 9.108 8.04v.935a.998.998 0 1 1-1.996 0v-.934a6.108 6.108 0 0 0-6.865-6.06zM0 1.065A.998.998 0 0 1 .93.002C8.717-.517 15.448 5.374 15.967 13.16c.042.626.042 1.254 0 1.88a.998.998 0 1 1-1.992-.133c.036-.538.036-1.077 0-1.614C13.53 6.607 7.75 1.548 1.065 1.994A.998.998 0 0 1 0 1.064z"></path></svg>
             </h1>
+            <p>
+                Welcome, <span id="username"></span>!
+            </p>
             <form>
                 <input type="text" name="url" placeholder="Enter feed URL">
                 <button type="button" onclick=addFeed() >
@@ -34,8 +38,36 @@
     </div>
 
     <script>
+        function getCookie(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for(let i = 0; i <ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        (async () => {
+            const username = getCookie("username");
+            const pocketToken = getCookie("access_token");
+
+            // If the user is not logged in, redirect to the login page
+            if (!username || !pocketToken) {
+                window.location.href = '/';
+            }
+
+            document.getElementById('username').innerText = username;
+        })();
+
         async function getFeeds() {
-            const response = await fetch('./rss/feeds');
+            const response = await fetch('./api/v2/feeds');
             const feeds = await response.json();
             const feedsList = document.querySelector('#feeds');
             feedsList.innerHTML = '';
@@ -61,7 +93,7 @@
             // disable button
             li.querySelector('button').disabled = true;
 
-            const response = await fetch('./rss/feeds', {
+            const response = await fetch('./api/v2/feeds', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -94,8 +126,7 @@
                 alert('Invalid URL');
                 return;
             }
-
-            const response = await fetch('./rss/feeds', {
+            const response = await fetch('./api/v2/feeds', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
